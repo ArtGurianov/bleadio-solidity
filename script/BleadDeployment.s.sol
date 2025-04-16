@@ -20,6 +20,7 @@ contract BleadDeployment is Script {
         vm.startBroadcast(deployerPrivateKey);
         if (envMode == bytes32(abi.encodePacked("development"))) {
             usdContractAddress = address(new TestUSD());
+            TestUSD(usdContractAddress).publicMintUSD(100);
         }
         if (envMode == bytes32(abi.encodePacked("production"))) {
             usdContractAddress = vm.envAddress("USD_CONTRACT_ADDRESS");

@@ -25,11 +25,11 @@ contract Blead is Ownable {
     // hashed apikey => startsAt, endsAt
     mapping(bytes32 => uint256[2]) private subscriptions;
 
-    function getSubscriptionDetails(bytes32 userIdHash) public view returns (uint256[2] memory) {
-        return subscriptions[userIdHash];
+    function getSubscriptionEndTimestamp(bytes32 userEmailHash) public view returns (uint256) {
+        return subscriptions[userEmailHash][1];
     }
 
-    function updateSubscription(bytes32 userIdHash, SubscriptionPlan plan) public {
+    function updateSubscription(bytes32 userEmailHash, SubscriptionPlan plan) public {
         uint256 chargeAmountUSD = plan == SubscriptionPlan.MONTHLY ? MONTHLY_PRICE_USD : ANNUAL_PRICE_USD;
         uint8 decimals = ERC20(USD_CONTRACT_ADDRESS).decimals();
         bool success =
@@ -38,14 +38,14 @@ contract Blead is Ownable {
         if (!success) revert TokenTransferFailed();
         uint256 addDays = plan == SubscriptionPlan.MONTHLY ? 30 : 360;
 
-        uint256[2] memory subscriptionData = subscriptions[userIdHash];
+        uint256[2] memory subscriptionData = subscriptions[userEmailHash];
         // ADD TO ONGOING SUBSCRIPTION
         if (subscriptionData[1] > block.timestamp) {
-            subscriptions[userIdHash][1] = subscriptions[userIdHash][1] + addDays * 3600 * 24;
+            subscriptions[userEmailHash][1] = subscriptions[userEmailHash][1] + addDays * 3600 * 24;
         }
         // NEW SUBSCRIPTION
         if (subscriptionData[0] == 0 && subscriptionData[1] == 0 || subscriptionData[1] <= block.timestamp) {
-            subscriptions[userIdHash] = [block.timestamp, block.timestamp + addDays * 3600 * 24];
+            subscriptions[userEmailHash] = [block.timestamp, block.timestamp + addDays * 3600 * 24];
         }
     }
 
