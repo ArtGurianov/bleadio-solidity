@@ -32,8 +32,8 @@ contract BleadTest is Test {
         deployedContractBlead.updateSubscription(testUserId, Blead.SubscriptionPlan.MONTHLY);
         vm.stopBroadcast();
 
-        uint256[2] memory subscriptionData = deployedContractBlead.getSubscriptionData(testUserId);
-        assertEq(subscriptionData[0], timestamp);
-        assertEq(subscriptionData[1], timestamp + 30 * 24 * 3600);
+        Blead.SubscriptionData memory subscriptionData = deployedContractBlead.getSubscriptionData(testUserId);
+        assertEq(subscriptionData.subscriptionStartTimestamp, timestamp);
+        assertEq(subscriptionData.subscriptionEndTimestamp, timestamp + 30 * 24 * 3600);
     }
 }

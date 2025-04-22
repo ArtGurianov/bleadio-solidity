@@ -12,6 +12,11 @@ contract Blead is Ownable {
         ANNUAL
     }
 
+    struct SubscriptionData {
+        uint256 subscriptionStartTimestamp;
+        uint256 subscriptionEndTimestamp;
+    }
+
     uint256 public MONTHLY_PRICE_USD;
     uint256 public ANNUAL_PRICE_USD;
     address public USD_CONTRACT_ADDRESS;
@@ -22,10 +27,10 @@ contract Blead is Ownable {
         ANNUAL_PRICE_USD = annualPriceUSD;
     }
 
-    // hashed userId => startsAt, endsAt
-    mapping(bytes32 => uint256[2]) private subscriptions;
+    // bytes32 userId => SubscriptionData
+    mapping(bytes32 => SubscriptionData) private subscriptions;
 
-    function getSubscriptionData(bytes32 userIdHash) public view returns (uint256[2] memory) {
+    function getSubscriptionData(bytes32 userIdHash) public view returns (SubscriptionData memory) {
         return subscriptions[userIdHash];
     }
 
@@ -38,14 +43,21 @@ contract Blead is Ownable {
         if (!success) revert TokenTransferFailed();
         uint256 addDays = plan == SubscriptionPlan.MONTHLY ? 30 : 360;
 
-        uint256[2] memory subscriptionData = subscriptions[userIdHash];
+        SubscriptionData memory subscriptionData = subscriptions[userIdHash];
         // ADD TO ONGOING SUBSCRIPTION
-        if (subscriptionData[1] > block.timestamp) {
-            subscriptions[userIdHash][1] = subscriptions[userIdHash][1] + addDays * 3600 * 24;
+        if (subscriptionData.subscriptionEndTimestamp > block.timestamp) {
+            subscriptions[userIdHash].subscriptionEndTimestamp =
+                subscriptions[userIdHash].subscriptionEndTimestamp + addDays * 3600 * 24;
         }
         // NEW SUBSCRIPTION
-        if (subscriptionData[0] == 0 && subscriptionData[1] == 0 || subscriptionData[1] <= block.timestamp) {
-            subscriptions[userIdHash] = [block.timestamp, block.timestamp + addDays * 3600 * 24];
+        if (
+            subscriptionData.subscriptionStartTimestamp == 0 && subscriptionData.subscriptionEndTimestamp == 0
+                || subscriptionData.subscriptionEndTimestamp <= block.timestamp
+        ) {
+            subscriptions[userIdHash] = SubscriptionData({
+                subscriptionStartTimestamp: block.timestamp,
+                subscriptionEndTimestamp: block.timestamp + addDays * 3600 * 24
+            });
         }
     }
 
